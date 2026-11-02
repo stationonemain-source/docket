@@ -467,7 +467,7 @@ var BRIEF_QS = [
 ];
 
 var RESPONDENTS = [];
-var INTERVIEWED = {"1B":["E6","D2"],"2B":["D1","A1","A2","A3"]};
+var INTERVIEWED = {};
 
 var LINE = [
   {id:"L6",when:"Fri Oct 23",time:"at the ranch",kind:"Site visit",up:true,title:"Site visit, whole class",body:"Ask Braxton the 13 “To confirm” questions from the creative brief. Her answers fill BRR-301.",src:"On the course calendar"},
@@ -633,6 +633,11 @@ function flagsFor(id){
   out.forEach(function(b){ Object.keys(edges[b]||{}).forEach(function(c){ if(c!==id && (edges[c]||{})[id]) f.push("approves in a closed circle with "+b+" and "+c); }); });
   reviewNotes(id).forEach(function(x){ if(genericNote(x.note)){ var d=docket(x.id); f.push("approved "+(d?d.makers[0]+"’s “"+d.title+"”":x.id)+" with a note that names nothing specific"); } });
   REVIEWS.forEach(function(x){ if(x.sample || !genericNote(x.note)) return; var d=docket(x.id); if(d && d.makers.indexOf(id)>=0) f.push("“"+d.title+"” was approved by "+x.by+" with a note that names nothing specific"); });
+  var approvers={}, cnt=0; DOCKETS.forEach(function(d){ if(d.makers.indexOf(id)<0 || !d.isNew) return; REVIEWS.forEach(function(x){ if(!x.sample && x.id===d.id){ approvers[x.by]=1; cnt++; } }); });
+  if(cnt>=2 && Object.keys(approvers).length<=2) f.push("every approval of their new work came from "+Object.keys(approvers).join(" and "));
+  var hashes={}; DOCKETS.forEach(function(d){ if(d.team!==(person(id)||{}).team) return; d.files.forEach(function(fl){ if(fl.hash) (hashes[fl.hash]=hashes[fl.hash]||[]).push({d:d,by:fl.by}); }); });
+  Object.keys(hashes).forEach(function(hk){ var g=hashes[hk]; var ids=g.map(function(x){ return x.d.id; }).filter(function(v,i,a){ return a.indexOf(v)===i; }); if(ids.length>1 && g.some(function(x){ return x.by===id; })) f.push("the same file is on "+ids.length+" pieces ("+ids.join(", ")+")"); });
+  if(S.peerClosed && !S.peerDone[id]) f.push("didn’t rate their teammates");
   var mine=reviewNotes(id); if(mine.length>=3){ var makers={}; mine.forEach(function(x){ var d=docket(x.id); if(d) makers[d.makers[0]]=1; }); if(Object.keys(makers).length<=1) f.push("all "+mine.length+" approvals went to one maker"); }
   if(S.peerClosed){ var v=peerRaw(id);
     if(v.length>=3){ var far=v.some(function(x,i){ var o=v.filter(function(_,j){ return j!==i; }), m=o.reduce(function(a,b){ return a+b; },0)/o.length; return Math.abs(x-m)>=2; }); if(far) f.push("teammate ratings disagree a lot"); }
@@ -1072,6 +1077,9 @@ document.addEventListener("click",function(e){
   if(a.piece){ e.preventDefault(); openPiece(a.piece); return; }
   if(a.sign){ var p=a.sign.split("|"), d=docket(p[0]); if(!d || !canSign(d,p[1])) return;
     var ne=$("#signnote"), note=ne?(ne.value||"").trim():"";
+    var specific=note.length>=30 || ((d.title+" "+(d.sub||"")+" "+(d.medium||"")).toLowerCase().match(/[a-z]{4,}/g)||[]).some(function(w){ return GENERIC.indexOf(w)<0 && note.toLowerCase().indexOf(w)>=0; });
+    var reused=REVIEWS.some(function(x){ return !x.sample && x.by===me() && x.id!==d.id && x.note.trim().toLowerCase()===note.trim().toLowerCase(); });
+    if(p[1]!=="client" && noteOK(note) && (!specific || reused)){ if(ne){ ne.setAttribute("aria-invalid","true"); ne.focus(); var er2=$("#noteerr"); if(er2) er2.textContent=reused?"You used this exact note on another piece. Say what you checked on this one.":"Name something about this piece, like its caption, photo or link, or write a full sentence (30+ characters)."; } return; }
     if(p[1]!=="client" && !noteOK(note)){ if(ne){ ne.setAttribute("aria-invalid","true"); ne.focus(); var er=$("#noteerr"); if(er) er.textContent="Say what you checked in at least 4 different words ("+MIN_NOTE+"+ characters). Repeated words don’t count."; } return; }
     var by=me(), w=nowStamp(); d.signed[p[1]]=[by,w,stepTitle(d,p[1])]; d.hist.push([w,by,"approved"+(note?": "+note:"")]);
     if(p[1]!=="client") REVIEWS.push({by:by,id:d.id,k:p[1],note:note,sample:false,when:w});
@@ -1160,13 +1168,24 @@ document.addEventListener("change",function(e){
     var okType=/^(image|video)\//.test(file.type) || /\.(pdf|docx?|pptx?|xlsx?|key|pages|png|jpe?g|gif|webp|heic|mp4|mov)$/i.test(file.name);
     if(!okType){ t.value=""; toast("That file type isn’t accepted. Use an image, video, PDF or Office file."); return; }
     if(file.size<512){ t.value=""; toast("That file is empty or too small ("+file.size+" bytes) to be the work."); return; }
-    var kind=/^image\//.test(file.type)?"image":/^video\//.test(file.type)?"video":"file";
+    var kind=/^image\//.test(file.type)?"image":/^video\//.test(file.type)?"video":"file", input=t;
+    file.arrayBuffer().then(function(buf){
+      var b=new Uint8Array(buf), h=2166136261>>>0; for(var i=0;i<b.length;i++){ h^=b[i]; h=Math.imul(h,16777619)>>>0; } var fp=h.toString(16)+":"+b.length;
+      var pdf=/\.pdf$/i.test(file.name)||file.type==="application/pdf";
+      if(pdf && !(b[0]===0x25&&b[1]===0x50&&b[2]===0x44&&b[3]===0x46)){ input.value=""; toast("That isn’t a readable PDF."); return; }
+      var check=kind==="image" && window.createImageBitmap ? createImageBitmap(file).then(function(){ return true; },function(){ return false; }) : Promise.resolve(true);
+      check.then(function(ok){ if(!ok){ input.value=""; toast("That image can’t be opened. Upload the real picture."); return; } addUpload(du,file,kind,fp); });
+    }); return; }
+  });
+function addUpload(du,file,kind,fp){ if(!canAddFiles(du)) return;
+  if(true){
     var vu=$("#ver-"+du.id), resetting=!!(vu && vu.checked && approvedSteps(du)), isV2=!du.signed.made || (vu && vu.checked);
     var snap={}; if(resetting) steps(du).slice(1).forEach(function(k){ if(du.signed[k]) snap[k]=du.signed[k]; });
-    du.files.push({kind:kind,name:file.name,size:fmtSize(file.size),url:URL.createObjectURL(file),by:me(),role:isV2?"version":"reference",cleared:resetting?snap:null}); handIn(du);
+    du.files.push({kind:kind,name:file.name,size:fmtSize(file.size),url:URL.createObjectURL(file),by:me(),role:isV2?"version":"reference",cleared:resetting?snap:null,hash:fp}); handIn(du);
     if(!resetting) du.hist.push([nowStamp(),me(),"Uploaded "+file.name+(isV2?"":" as a reference")]);
-    toast(file.name+" added."+(resetting?changed(du,"Uploaded "+file.name):"")); render(); return; }
-});
+    toast(file.name+" added."+(resetting?changed(du,"Uploaded "+file.name):"")); render(); }
+}
+
 document.addEventListener("submit",function(e){
   e.preventDefault();
   if(e.target.id==="logf"){ var n=$("#ln"), tx=(n.value||"").trim(); if(!tx){ n.focus(); toast("Add a line of notes first"); return; }
