@@ -419,6 +419,8 @@ var TEAMS = {
   3:{name:"Community, PR, Video and Personal Selling", short:"Community and PR", lead:"3A"}
 };
 var ROSTER = ["1A","1B","1C","1D","2A","2B","2C","2D","2E","3A","3B","3C","3D"].map(function(id){ return {id:id, team:+id[0]}; });
+/* First names as the class docs give them; initials where the Week 9 doc only has initials. Surnames never. */
+var NAMES = {"1A":"Charlie","1B":"Autumn","1C":"NS","1D":"SNB","2A":"Savannah","2B":"Abby","2C":"EM","2D":"James","2E":"Kaylee","3A":"Gracie","3B":"AE","3C":"Ava","3D":"Peter"};
 
 var BRIEF = [
   ["Proposition, three options for Braxton",null,["Every horse has a story. Every heart that loves them deserves to see it.","Butterfly Rescue Ranch connects your support to every horse’s journey, from rescue to recovery.","Giving every horse the love, care, and future they deserve."]],
@@ -667,7 +669,7 @@ var $=function(s,r){ return (r||document).querySelector(s); };
 function esc(s){ return String(s==null?"":s).replace(/[&<>"]/g,function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]; }); }
 function person(id){ return ROSTER.filter(function(p){ return p.id===id; })[0]; }
 function docket(id){ return DOCKETS.filter(function(d){ return d.id===id; })[0]; }
-function nameOf(id){ if(id==="LD") return "Laura"; if(id==="BB") return "Braxton"; if(id==="Class") return "Whole class"; return "Student "+id; }
+function nameOf(id){ if(id==="LD") return "Laura"; if(id==="BB") return "Braxton"; if(id==="Class") return "Whole class"; return NAMES[id]||("Student "+id); }
 function me(){ return S.role==="laura"?"LD":S.role==="braxton"?"BB":S.me; }
 function toast(t){ var e=$("#toast"); e.textContent=t; e.classList.add("on"); clearTimeout(toast._t); toast._t=setTimeout(function(){ e.classList.remove("on"); },2600); }
 function stamp(id,link){ if(link && S.role==="laura" && person(id)) return '<button class="stamp" data-student="'+id+'" title="Open '+esc(nameOf(id))+'">'+esc(id)+'</button>'; return '<span class="stamp" title="'+esc(nameOf(id))+'">'+esc(id)+'</span>'; }
@@ -703,7 +705,7 @@ function stepWho(d,k){
   if(k==="made") return nameOf(d.makers[0])+" to attach the file";
   if(k==="team") return "anyone on Team "+d.team+" except the maker";
   if(k==="cross") return "anyone on Team "+d.cross;
-  if(k==="teacher") return gateHolder(d)==="LD"?"Laura":"Student "+gateHolder(d)+", Team "+d.team+"’s account lead";
+  if(k==="teacher") return gateHolder(d)==="LD"?"Laura":nameOf(gateHolder(d))+", Team "+d.team+"’s account lead";
   return "Braxton, from her weekly email";
 }
 function canSign(d,k){
@@ -829,7 +831,7 @@ function todos(){
 }
 function viewDashboard(){
   var t=todos(), teacher=S.role==="laura";
-  var greet=teacher?"Evening brief · "+scopeName():"Evening brief · Student "+S.me+", Team "+person(S.me).team;
+  var greet=teacher?"Evening brief · "+scopeName():"Evening brief · "+nameOf(S.me)+", Team "+person(S.me).team;
   var h='<div class="kick">'+greet+'</div><h1 tabindex="-1">'+(t.length?(t.length===1?"1 thing needs you.":t.length+" things need you."):"Nothing needs you.")+'</h1>'+
     '<p class="lede">Week 11. The Week 9 check-in went in on Oct 25 and the site visit was Oct 23. Next: the four things still open with Braxton.</p>'+(S.role==="student"?'<p style="margin:12px 0 0"><button class="btn act" data-go="work" data-adding="1">Add work</button></p>':'');
   h+='<section class="blk"><div class="cards2">'+(t.length?t.slice(0,4).map(function(x){ return '<div class="panel acard"><span><span class="pill '+(x.kind==="bad"?"bad":"todo")+'">'+(x.kind==="bad"?"Problem":"To do")+'</span></span><h2 class="h3">'+esc(x.title)+'</h2><p>'+esc(x.sub)+'</p><button class="btn act" '+x.data+'>'+esc(x.btn)+'</button></div>'; }).join(""):'<div class="panel empty"><b>You’re caught up.</b>Nothing is waiting for you right now.</div>')+'</div>'+
@@ -962,7 +964,7 @@ function viewPiece(id){
 function entry(l){
   var who=(l.by && person(l.by))?stamp(l.by):"";
   var ch=l.kind+(l.dir==="out"?" to Braxton":l.dir==="in"?" from Braxton":"");
-  var ap=l.held?approverOf(l):null, apName=ap==="LD"?"Laura":ap?"Student "+ap+", the account lead":"";
+  var ap=l.held?approverOf(l):null, apName=ap==="LD"?"Laura":ap?nameOf(ap)+", the account lead":"";
   var skipKind=l.title && l.title.toLowerCase().indexOf(l.kind.toLowerCase())===0;
   var h='<div class="entry'+(l.held?" held":"")+'"><div class="d"><b>'+esc(l.when)+'</b>'+esc(l.time||"")+'</div><div><div class="k"><span class="ch">'+(l.held?"Not sent yet · ":l.returned?"Given back · ":"")+(skipKind?"":esc(ch))+'</span>'+who+(l.sample?'<span class="tag">sample</span>':'')+'</div>'+(l.title?'<p><b>'+esc(l.title)+'</b></p>':'')+'<p>'+esc(l.body)+'</p><div class="src">'+(l.held?"Waiting for "+esc(apName)+"’s approval":esc(l.src||""))+(l.mins?' · '+l.mins+' min':'')+(l.follow?' · follow-up: '+esc(l.follow):'')+(l.doc?' · <button class="link" data-piece="'+l.doc+'">open the piece</button>':'')+'</div>';
   if(l.held && ap===me()) h+='<div class="acts"><button class="btn act" data-approve="'+l.id+'">Send it to Braxton</button><button class="link" data-reject="'+l.id+'">Give it back to '+esc(l.by)+'</button></div>'+(S.rejOpen===l.id?'<div class="act-box"><input id="rjr" placeholder="Why? '+esc(l.by)+' sees this." aria-label="Why you are giving it back"><div class="row2"><button class="btn bad sm" data-rejectgo="'+l.id+'">Give it back</button><button class="btn sm" data-rejcancel="1">Cancel</button></div></div>':'');
@@ -1028,7 +1030,7 @@ function viewGrades(){
   roster.forEach(function(p){
     var counted=madeBy(p.id), mine=DOCKETS.filter(function(d){ return d.makers.indexOf(p.id)>=0 && !d.answerQ; }), waiting=mine.filter(function(d){ return counted.indexOf(d)<0; });
     var rn=reviewNotes(p.id), rv=reviewsBy(p.id), qs=QUESTIONS.filter(function(q){ return q.owners.indexOf(p.id)>=0; }), con=LINE.filter(function(l){ return l.by===p.id && !l.held && !l.returned; }).length, pa=peerAvg(p.id), fl=flagsFor(p.id);
-    h+='<tr'+(!visible(p.id)?' class="flag"':'')+'><td class="stu"><span class="nw">'+stamp(p.id,true)+' <span class="small faint">Team '+p.team+'</span></span>'+(p.id==="2D"?'<span class="note2d">Example: the check-in may credit 2D for the Make-A-Wish review.</span>':'')+fl.map(function(f){ return '<span class="flagline">Check: '+esc(f)+'</span>'; }).join("")+'</td>'+
+    h+='<tr'+(!visible(p.id)?' class="flag"':'')+'><td class="stu"><span class="nw">'+stamp(p.id,true)+(NAMES[p.id]?' <b>'+esc(NAMES[p.id])+'</b>':"")+' <span class="small faint">Team '+p.team+'</span></span>'+(p.id==="2D"?'<span class="note2d">Example: the check-in may credit 2D for the Make-A-Wish review.</span>':'')+fl.map(function(f){ return '<span class="flagline">Check: '+esc(f)+'</span>'; }).join("")+'</td>'+
       '<td data-l="Their work"><div class="workthumbs">'+mine.map(function(d){ return '<button class="thumb" data-piece="'+d.id+'" title="'+esc(d.title+" · "+status(d).txt)+'" aria-label="Open '+esc(d.title)+'">'+thumb(d).replace(/^<span class="thumb">|<\/span>$/g,"")+'</button>'; }).join("")+'</div><span class="ev">'+(mine.length?counted.length+" counted"+(waiting.length?" · "+waiting.length+" waiting":""):(handedIn(p.id).length?"handed in, waiting":visible(p.id)?"no pieces of their own":"Nothing in Docket yet"))+'</span></td>'+
       '<td class="n" data-l="Reviewed others">'+rv.length+(rn.length?'<span class="ev"><q>'+esc(rn[rn.length-1].note)+'</q>'+(rn.length>1?' <button class="quiet" data-student="'+p.id+'">all '+rn.length+' notes</button>':'')+'</span>':'')+'</td>'+
       '<td data-l="Research"><span class="ev">'+(qs.length?qs.map(function(q){ var st=q.posted.indexOf(p.id)>=0?(q.privateDoc?"private Doc":"posted"):(q.pending||{})[p.id]?"waiting":"not posted"; return '<button class="quiet" data-answer-open="'+q.n+'">Q'+q.n+'</button> '+st; }).join("<br>"):'none owned')+'</span></td>'+
@@ -1110,7 +1112,7 @@ function viewAnswer(){
 
 /* ---------- Course (the Manager of a class) ---------- */
 function viewCourse(){
-  var h='<div class="kick">Whole class</div><h1 tabindex="-1">Course</h1><p class="lede">How the class runs: who gives the final approval, the semester plan, and this week’s research questions.</p><p class="small" style="margin:10px 0 0"><span class="pill todo">Proposal</span> Pilot proposal: run next semester’s MKT 4970 in Docket. Students sign in with OU accounts; grades go to Canvas.</p>';
+  var h='<div class="kick">Whole class</div><h1 tabindex="-1">Course</h1><p class="lede">How the class runs: who gives the final approval, the semester plan, and this week’s research questions.</p>';
   h+='<div class="subtabs" role="tablist">'+[["settings","Final approval"],["plan","Semester plan"],["questions","Research questions"]].map(function(t){ return '<button role="tab" aria-selected="'+(S.ctab===t[0]||(S.ctab==="work"&&t[0]==="settings"))+'" data-ctab="'+t[0]+'">'+t[1]+'</button>'; }).join("")+'</div>';
   var tab=S.ctab==="work"?"settings":S.ctab;
   if(tab==="settings") h+='<div class="panel"><div class="panel-h"><h2 class="h3">Who gives the final approval before anything reaches Braxton?</h2></div><div class="panel-b"><div class="seg" role="group" aria-label="Final approval"><button aria-pressed="'+(S.gate==="teacher")+'" data-gate="teacher">Me</button><button aria-pressed="'+(S.gate==="lead")+'" data-gate="lead">Each team’s account lead</button></div><p class="small faint" style="margin:10px 0 0">'+(S.gate==="teacher"?"Every piece and every student email going to Braxton waits for you.":"Account leads: "+[1,2,3].map(function(t){ return "Team "+t+" "+(TEAMS[t].lead||"none"); }).join(" · ")+". Anything a lead made still comes to you.")+' Change leads on the Students page.</p></div></div>';
@@ -1210,7 +1212,7 @@ function setHash(t){ try{ history.replaceState(null,"","#"+t); }catch(e){} }
 function go(v){ S.view=v; S.sbOpen=null; S.canvas=null; closeBell(); setHash(v); render(); window.scrollTo(0,0); }
 function openPiece(id){ if(!docket(id)) return; if(S.role==="laura" && docket(id).pick) S.seenPick=true; S.piece=id; S.sbOpen=null; S.view="piece"; closeBell(); setHash(id.toLowerCase().replace("-","")); render(); window.scrollTo(0,0); }
 function openStudent(id){ if(S.role!=="laura" || !person(id)) return; S.student=id; S.view="student"; closeBell(); render(); window.scrollTo(0,0); }
-function fillMe(){ $("#me").innerHTML=ROSTER.map(function(p){ return '<option value="'+p.id+'"'+(p.id===S.me?" selected":"")+'>'+p.id+' · Team '+p.team+'</option>'; }).join(""); }
+function fillMe(){ $("#me").innerHTML=ROSTER.map(function(p){ return '<option value="'+p.id+'"'+(p.id===S.me?" selected":"")+'>'+esc(nameOf(p.id))+' · '+p.id+' · Team '+p.team+'</option>'; }).join(""); }
 function insertPast(e){ var i=LINE.findIndex(function(x){ return !x.up; }); LINE.splice(i<0?LINE.length:i,0,e); }
 function fmtSize(b){ return b>1048576?(b/1048576).toFixed(1)+" MB":Math.max(1,Math.round(b/1024))+" KB"; }
 
@@ -1219,7 +1221,7 @@ function search(q){
   q=q.trim().toLowerCase(); var box=$("#results"); if(q.length<2){ box.hidden=true; return; }
   var r=[];
   DOCKETS.forEach(function(d){ if(S.role==="braxton") return; if((d.title+" "+d.sub+" "+d.id).toLowerCase().indexOf(q)>=0) r.push(['data-piece="'+d.id+'"',d.title,"Work · Team "+d.team]); });
-  if(S.role==="laura") ROSTER.forEach(function(p){ if(("student "+p.id).toLowerCase().indexOf(q)>=0 || p.id.toLowerCase()===q) r.push(['data-student="'+p.id+'"',"Student "+p.id,"Team "+p.team]); });
+  if(S.role==="laura") ROSTER.forEach(function(p){ if((nameOf(p.id)+" student "+p.id).toLowerCase().indexOf(q)>=0 || p.id.toLowerCase()===q) r.push(['data-student="'+p.id+'"',nameOf(p.id)+" · "+p.id,"Team "+p.team]); });
   LINE.forEach(function(l){ if(S.role==="braxton") return; if(l.body.toLowerCase().indexOf(q)>=0) r.push(['data-go="inbox"',(l.title||l.kind)+", "+l.when,"Inbox"]); });
   RESPONDENTS.forEach(function(x){ if(S.role==="braxton") return; if((x[0]+" "+x[1]+" "+x[2]).toLowerCase().indexOf(q)>=0) r.push(['data-go="contacts"',x[0]+" · "+x[1],"Stakeholder interview"]); });
   QUESTIONS.forEach(function(x){ if(S.role!=="laura") return; if(x.q.toLowerCase().indexOf(q)>=0) r.push([S.role==="laura"?'data-go="course" data-ctab="questions"':'data-go="dashboard"',"Q"+x.n+". "+x.q.split(":")[0],"Research question"]); });
@@ -1287,7 +1289,7 @@ document.addEventListener("click",function(e){
   if(a.weight){ if(S.role!=="laura") return; var wp2=a.weight.split("|"), dw=docket(wp2[0]); if(!dw) return; dw.weight=+wp2[1]; dw.hist.push([nowStamp(),"LD","Set how much it counts: "+({"0.5":"small","1":"normal","2":"large"})[wp2[1]]]); toast("Weight saved"); render(); return; }
   if(a.peerclose){ if(S.role!=="laura") return; S.peerClosed=true; toast("Teammate ratings closed and locked. Averages show where 3 or more ratings came in."); render(); return; }
   if(a.copylink){ var u2="https://claude.ai/artifact/5LAVthoYiNFtfTQAbkgfq8#"+a.copylink.toLowerCase().replace("-",""); try{ navigator.clipboard.writeText(u2).then(function(){ toast("Link copied"); },function(){ toast(u2); }); }catch(err){ toast(u2); } return; }
-  if(a.copysummary){ var txt="MKT 4970 · Butterfly Rescue Ranch · Week 9 · Student "+S.me+"\n"+Array.prototype.map.call(document.querySelectorAll("main .panel-b li"),function(li){ return "- "+li.textContent; }).filter(function(x){ return /^- (Made|Reviewed|Answered)/.test(x); }).join("\n"); S.copyText=txt; try{ navigator.clipboard.writeText(txt).then(function(){ toast("Copied"); },function(){ toast("Select the text below and copy it"); }); }catch(err){ toast("Select the text below and copy it"); } render(); var cb=$("#copybox"); if(cb) cb.select(); return; }
+  if(a.copysummary){ var txt="MKT 4970 · Butterfly Rescue Ranch · Week 9 · "+nameOf(S.me)+" ("+S.me+")\n"+Array.prototype.map.call(document.querySelectorAll("main .panel-b li"),function(li){ return "- "+li.textContent; }).filter(function(x){ return /^- (Made|Reviewed|Answered)/.test(x); }).join("\n"); S.copyText=txt; try{ navigator.clipboard.writeText(txt).then(function(){ toast("Copied"); },function(){ toast("Select the text below and copy it"); }); }catch(err){ toast("Select the text below and copy it"); } render(); var cb=$("#copybox"); if(cb) cb.select(); return; }
   if(a.rmkeep){ S.rmAsk=null; render(); return; }
   if(a.jump){ var ap=$("#approvals"); if(ap){ ap.scrollIntoView({block:"start"}); var sn=$("#signnote"); if(sn) sn.focus({preventScroll:true}); } return; }
   if(a.gate){ if(S.role!=="laura") return; S.gate=a.gate; toast(S.gate==="teacher"?"You give the final approval":"Account leads give the final approval"); render(); return; }
