@@ -261,12 +261,15 @@ button.stamp:hover{background:var(--ink);color:var(--paper)}
 /* ---------- grades ---------- */
 .rubric{display:flex;gap:8px 20px;flex-wrap:wrap;font-size:var(--s12);color:var(--ink3);padding:12px 20px;border-bottom:1px solid var(--line2)}
 .rubric b{color:var(--ink)}
-.gtbl{min-width:900px}
 .gtbl input[type=number]{width:68px;border:1px solid var(--line3);background:var(--panel);border-radius:6px;padding:6px 8px;font-weight:700}
-.gtbl input[type=text]{width:100%;min-width:150px;border:1px solid var(--line3);background:var(--panel);border-radius:6px;padding:6px 8px}
+.gtbl input[type=text]{width:100%;min-width:120px;border:1px solid var(--line3);background:var(--panel);border-radius:6px;padding:6px 8px}
 .gtbl .workthumbs{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:4px}
 .gtbl .workthumbs .thumb{width:32px;height:32px;cursor:pointer;padding:0}
 .gtbl tr.flag td{background:var(--red-t)}
+.gtbl .c-stu{width:180px}.gtbl .c-work{min-width:184px}.gtbl td[data-l="Their work"] .ev,.gtbl td[data-l="Teammate ratings"] span{white-space:nowrap}.gtbl .c-res{min-width:120px}.gtbl .c-peer{min-width:140px}
+.gtbl td.stu .flagline{max-width:220px;line-height:1.35}.gtbl .note2d{display:block;margin-top:6px;max-width:220px;font-size:var(--s11);line-height:1.35;color:var(--ink2)}
+.gtbl{min-width:980px}
+.gtbl td,.gtbl th{padding-left:14px;padding-right:12px}.gtbl td:first-child,.gtbl th:first-child{padding-left:20px}
 .sug b{font-size:var(--s16)}
 .sug small{display:block;font-size:var(--s11);color:var(--ink3)}
 .sendbar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;padding:14px 20px;border-top:1px solid var(--line)}
@@ -1016,22 +1019,22 @@ function viewMail(){ return '<div class="kick">Butterfly Rescue Ranch</div><h1>T
 function viewGrades(){
   var roster=ROSTER.filter(function(p){ return inScope(p.team); });
   var h='<div class="kick">'+esc(scopeName())+'</div><h1 tabindex="-1">Grades, Week 9</h1><p class="lede">What each student did, as evidence. You type the grade. Nothing is filled in for you'+(S.showStart?'; the starting points shown are a starting point, not a grade':'')+'.</p>';
-  h+='<section class="blk"><div class="panel"><div class="panel-h"><h2 class="h3">Evidence by student</h2><span style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><label class="check small"><input type="checkbox" id="startpt" '+(S.showStart?'checked':'')+'> Show a starting point</label></span></div><div class="scroll"><table class="tbl gtbl stack"><thead><tr><th>Student</th><th>Their work</th><th class="n">Reviewed others</th><th>Research</th><th>Teammate ratings</th><th class="n">Client contact</th>'+(S.showStart?'<th>Starting point</th>':'')+'<th>Grade</th><th>Comment</th></tr></thead><tbody>';
+  h+='<section class="blk"><div class="panel"><div class="panel-h"><h2 class="h3">Evidence by student</h2><span style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><label class="check small"><input type="checkbox" id="startpt" '+(S.showStart?'checked':'')+'> Show a starting point</label></span></div><div class="scroll"><table class="tbl gtbl stack"><thead><tr><th class="c-stu">Student</th><th class="c-work">Their work</th><th class="n">Reviewed others</th><th class="c-res">Research</th><th class="c-peer">Teammate ratings</th><th class="n">Client contact</th>'+(S.showStart?'<th>Starting point</th>':'')+'<th>Grade</th><th>Comment</th></tr></thead><tbody>';
   roster.forEach(function(p){
     var counted=madeBy(p.id), mine=DOCKETS.filter(function(d){ return d.makers.indexOf(p.id)>=0 && !d.answerQ; }), waiting=mine.filter(function(d){ return counted.indexOf(d)<0; });
     var rn=reviewNotes(p.id), rv=reviewsBy(p.id), qs=QUESTIONS.filter(function(q){ return q.owners.indexOf(p.id)>=0; }), con=LINE.filter(function(l){ return l.by===p.id && !l.held && !l.returned; }).length, pa=peerAvg(p.id), fl=flagsFor(p.id);
-    h+='<tr'+(!visible(p.id)?' class="flag"':'')+'><td class="nw">'+stamp(p.id,true)+' <span class="small faint">Team '+p.team+'</span>'+(p.id==="2D"?'<span class="flagline" style="color:var(--ink3)">Example: the check-in may credit 2D on the Make-A-Wish review</span>':'')+fl.map(function(f){ return '<span class="flagline">Check: '+esc(f)+'</span>'; }).join("")+'</td>'+
+    h+='<tr'+(!visible(p.id)?' class="flag"':'')+'><td class="stu"><span class="nw">'+stamp(p.id,true)+' <span class="small faint">Team '+p.team+'</span></span>'+(p.id==="2D"?'<span class="note2d">Example: the check-in may credit 2D for the Make-A-Wish review.</span>':'')+fl.map(function(f){ return '<span class="flagline">Check: '+esc(f)+'</span>'; }).join("")+'</td>'+
       '<td data-l="Their work"><div class="workthumbs">'+mine.map(function(d){ return '<button class="thumb" data-piece="'+d.id+'" title="'+esc(d.title+" · "+status(d).txt)+'" aria-label="Open '+esc(d.title)+'">'+thumb(d).replace(/^<span class="thumb">|<\/span>$/g,"")+'</button>'; }).join("")+'</div><span class="ev">'+(mine.length?counted.length+" counted"+(waiting.length?" · "+waiting.length+" waiting":""):(handedIn(p.id).length?"handed in, waiting":visible(p.id)?"no pieces of their own":"Nothing in Docket yet"))+'</span></td>'+
       '<td class="n" data-l="Reviewed others">'+rv.length+(rn.length?'<span class="ev"><q>'+esc(rn[rn.length-1].note)+'</q>'+(rn.length>1?' <button class="quiet" data-student="'+p.id+'">all '+rn.length+' notes</button>':'')+'</span>':'')+'</td>'+
       '<td data-l="Research"><span class="ev">'+(qs.length?qs.map(function(q){ var st=q.posted.indexOf(p.id)>=0?(q.privateDoc?"private Doc":"posted"):(q.pending||{})[p.id]?"waiting":"not posted"; return '<button class="quiet" data-answer-open="'+q.n+'">Q'+q.n+'</button> '+st; }).join("<br>"):'none owned')+'</span></td>'+
-      '<td data-l="Teammate ratings">'+(pa?'<b>'+pa.avg.toFixed(1)+'</b> / 5':'<span class="small faint">'+(S.peerClosed?"hidden: not every teammate got 3 ratings":"shown when you close ratings")+'</span>')+'</td>'+
+      '<td data-l="Teammate ratings">'+(pa?'<b>'+pa.avg.toFixed(1)+'</b> / 5':'<span class="small faint" title="'+(S.peerClosed?"A team’s averages show only when every member has 3 or more ratings, so no single rater can be traced.":"Ratings stay hidden until you close them.")+'">'+(S.peerClosed?"hidden: too few ratings":"once ratings close")+'</span>')+'</td>'+
       '<td class="n" data-l="Client contact">'+con+'</td>'+
       (S.showStart?'<td class="sug" data-l="Starting point" data-sp="'+p.id+'"><b class="tab">'+suggest(p.id).total+'</b><small class="why">'+esc(whyLine(suggest(p.id)))+'</small></td>':'')+
       '<td data-l="Grade"><input type="number" min="0" max="50" step="1" data-grade="'+p.id+'" value="'+(S.grades[p.id]!=null?S.grades[p.id]:"")+'" placeholder="/50" aria-label="Grade for '+esc(nameOf(p.id))+', out of 50"></td>'+
       '<td data-l="Comment"><input type="text" data-comment="'+p.id+'" value="'+esc(S.comments[p.id]||"")+'" placeholder="Optional" aria-label="Comment for '+esc(nameOf(p.id))+'"></td></tr>';
   });
   var graded=roster.filter(function(p){ return S.grades[p.id]!=null; }).length;
-  h+='</tbody></table></div><div class="sendbar"><span class="muted">'+graded+' of '+roster.length+' graded · Canvas column: <b>Week 9 Check-In, 50 points</b></span><span style="display:flex;gap:10px;flex-wrap:wrap">'+(S.peerClosed?'':'<button class="btn" data-peerclose="1">Close teammate ratings</button>')+'<button class="btn act" data-canvas="review">Send to Canvas</button></span></div></div>';
+  h+='</tbody></table></div><div class="sendbar"><span class="muted"><span id="gcount">'+graded+' of '+roster.length+' graded</span> · Canvas column: <b>Week 9 Check-In, 50 points</b></span><span style="display:flex;gap:10px;flex-wrap:wrap">'+(S.peerClosed?'':'<button class="btn" data-peerclose="1">Close teammate ratings</button>')+'<button class="btn act" data-canvas="review">Send to Canvas</button></span></div></div>';
   if(S.canvas==="review") h+='<div class="panel confirm"><h2 class="h3">Send '+graded+' grade'+(graded===1?'':'s')+' to Canvas?</h2><ul><li>Course: MKT 4970, Integrated Marketing Communications</li><li>Assignment: Week 9 Check-In, out of 50</li><li>'+(roster.length-graded)+' student'+(roster.length-graded===1?'':'s')+' left blank, not sent</li><li>'+roster.filter(function(p){ return S.comments[p.id]; }).length+' comment'+(roster.filter(function(p){ return S.comments[p.id]; }).length===1?'':'s')+' go with them</li></ul><div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn act" data-canvas="send"'+(graded?'':' disabled')+'>Send</button><button class="btn" data-canvas="cancel">Cancel</button></div></div>';
   if(S.canvas==="sent") h+='<div class="panel confirm"><h2 class="h3">Canvas isn’t connected in this demo</h2><p class="muted" style="margin:6px 0 0">Nothing was sent. In the real product these grades post to the Canvas gradebook, and each student sees their score and comment there.</p></div>';
   return h+'</section>';
@@ -1295,6 +1298,7 @@ document.addEventListener("input",function(e){
   if(t.id==="signnote" && S.piece) (S.noteDraft=S.noteDraft||{})[S.piece]=t.value;
   if(t.dataset && t.dataset.peernote){ (S.peer[S.me]=S.peer[S.me]||{}); S.peer[S.me][t.dataset.peernote]=S.peer[S.me][t.dataset.peernote]||{}; S.peer[S.me][t.dataset.peernote].note=t.value; var pw=$("#pw-"+t.dataset.peernote); if(pw) pw.textContent=selfRef(t.value)?"This note could show it’s from you: it says I, my or me, or names your seat, your question or your work. Reword it so it could come from anyone.":""; }
   if(t.dataset && t.dataset.comment) S.comments[t.dataset.comment]=t.value;
+  if(t.dataset && t.dataset.grade && S.role==="laura"){ var gv=t.value===""?null:Math.max(0,Math.min(50,Math.round(+t.value))); S.grades[t.dataset.grade]=isNaN(gv)?null:gv; var gc=$("#gcount"), gr=ROSTER.filter(function(r){ return inScope(r.team); }); if(gc) gc.textContent=gr.filter(function(r){ return S.grades[r.id]!=null; }).length+" of "+gr.length+" graded"; }
 });
 document.addEventListener("keydown",function(e){ if(e.key==="Escape"){ closeBell(); $("#results").hidden=true; } if(e.key==="/" && !/input|textarea|select/i.test(document.activeElement.tagName)){ e.preventDefault(); $("#q").focus(); } });
 document.addEventListener("change",function(e){
