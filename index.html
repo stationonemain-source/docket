@@ -308,6 +308,29 @@ button.stamp:hover{background:var(--ink);color:var(--paper)}
 .field label{font-size:var(--s12);color:var(--ink3);font-weight:600}
 .field input,.field select,.field textarea{border:1px solid var(--line3);background:var(--panel);border-radius:10px;padding:8px 12px;width:100%}
 .check{display:flex;gap:8px;align-items:center}
+
+/* ---------- chat ---------- */
+.chat{display:grid;grid-template-columns:230px minmax(0,1fr);gap:20px;align-items:start}
+.rooms{display:flex;flex-direction:column;gap:2px;padding:8px}
+.room{all:unset;box-sizing:border-box;cursor:pointer;display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:6px;color:var(--ink2);font-size:var(--s14)}
+.room:hover{background:var(--panel2);color:var(--ink)}
+.room:focus-visible{outline:2px solid var(--blue)}
+.room[aria-current="true"]{background:var(--blue-t);color:var(--ink);font-weight:600}
+.room .lbl{flex:1;min-width:0}
+.room small{display:block;font-size:var(--s11);color:var(--ink3);font-weight:400}
+.thread{display:flex;flex-direction:column}
+.daysep{font-size:var(--s11);color:var(--ink3);padding:12px 20px 2px;font-weight:600}
+.msg{display:grid;grid-template-columns:34px minmax(0,1fr);gap:12px;padding:10px 20px}
+.msg+.msg{border-top:1px solid var(--line2)}
+.msg .who{display:flex;gap:8px;align-items:baseline;font-size:var(--s12);color:var(--ink3)}
+.msg .who b{color:var(--ink);font-size:var(--s14)}
+.msg p{margin:3px 0 0;max-width:64ch;white-space:pre-line}
+.msg.ann{background:var(--blue-t)}
+.msg.mine .who b::after{content:" · you";font-weight:400;color:var(--ink3)}
+.chatf{display:flex;gap:10px;align-items:flex-end;padding:14px 20px;border-top:1px solid var(--line)}
+.chatf textarea{flex:1;border:1px solid var(--line3);background:var(--panel);border-radius:10px;padding:8px 12px;min-height:42px}
+.chatf .note{padding:14px 20px;border-top:1px solid var(--line);font-size:var(--s12);color:var(--ink3);margin:0}
+@media (max-width:1000px){ .chat{grid-template-columns:minmax(0,1fr)} .rooms{flex-direction:row;overflow-x:auto;scrollbar-width:none} .room{flex:none} .room small{display:none} }
 .mail{max-width:720px}
 .mail-h{padding:14px 20px;border-bottom:1px solid var(--line2);font-size:var(--s12);color:var(--ink3);display:grid;grid-template-columns:64px minmax(0,1fr);gap:2px 10px}
 .mail-h b{color:var(--ink);font-weight:600}
@@ -412,7 +435,7 @@ button.stamp:hover{background:var(--ink);color:var(--paper)}
 (function(){
 "use strict";
 /* Real course data: MKT 4970's Week 9 check-in, creative brief and stakeholder repository.
-   Students appear only as seats (team number + letter); no student names or initials are in this page. */
+   Students appear by seat (team number + letter) and first name, as the class docs give them; surnames never. */
 var TEAMS = {
   1:{name:"Brand, Strategy and Creative", short:"Brand", lead:"1A"},
   2:{name:"Web, Social and Content", short:"Web and Social", lead:"2A"},
@@ -658,10 +681,49 @@ CONTACTS.push({name:"Harley",role:"Ranch staff, Butterfly Rescue Ranch",kind:"Cl
   LINE.length=0; [still,w,v,byId.L5,byId.L4,byId.L3,byId.L2,byId.L1].forEach(function(l){ if(l) LINE.push(l); });
 })();
 
+/* ---------- Chat (patch22, 2026-11-03): rooms and sample threads. Every line restates something in the class's real
+   posts, calls, brief or calendar; none is a message a classmate wrote. Laura reads every room. ---------- */
+var ROOMS=[{id:"ann",name:"Announcements",sub:"Laura posts, everyone reads"},{id:"class",name:"Whole class",sub:"all three teams"},
+  {id:"t1",name:"Team 1",sub:TEAMS[1].short,team:1},{id:"t2",name:"Team 2",sub:TEAMS[2].short,team:2},{id:"t3",name:"Team 3",sub:TEAMS[3].short,team:3}];
+var CHAT=[
+  {room:"ann",when:"Mon Oct 19",time:"6:40 PM",by:"LD",body:"The creative brief draft goes to Braxton tonight once I’ve signed it. The 13 “to confirm” questions are at the end of BRR-301. Read them before Friday."},
+  {room:"ann",when:"Wed Oct 21",time:"9:05 AM",by:"LD",body:"Site visit is Friday Oct 23 at the ranch, whole class. Team 1 leads the brief questions; every team asks its own. Ask, don’t guess."},
+  {room:"ann",when:"Thu Oct 22",time:"8:00 AM",by:"LD",body:"Week 9 research questions: claim yours by 10 PM tonight. Question 3 still needs a Team 1 owner."},
+  {room:"ann",when:"Sat Oct 24",time:"10:30 AM",by:"LD",body:"The check-in is due Sunday 11:59 PM, 50 points. If no one can see what you did, it doesn’t count."},
+  {room:"ann",when:"Mon Oct 26",time:"7:45 AM",by:"LD",body:"Website workshop today with Station. Bring your Part 3 research answers."},
+  {room:"ann",when:"Mon Nov 2",time:"8:10 AM",by:"LD",body:"Week 11. Four things are still open with Braxton; they’re on the Client page. Teammate ratings for Week 9 close Sunday."},
+
+  {room:"class",when:"Fri Oct 23",time:"2:40 PM",by:"3A",body:"Braxton settled the line at the ranch: “Every horse has a story; every loving heart deserves to see it.”"},
+  {room:"class",when:"Fri Oct 23",time:"2:52 PM",by:"2A",body:"Rico stays for good. Daisy, Reba and Dandelion may be rehomed, so no post should promise a horse will still be there."},
+  {room:"class",when:"Fri Oct 23",time:"3:10 PM",by:"1A",body:"Brief updated with her answers, BRR-301. The objective is now $2,000 to $3,000 by January, donors first."},
+  {room:"class",when:"Fri Oct 23",time:"3:31 PM",by:"LD",body:"Thank you. Still open with her: the 5- and 10-year vision, the brand concept, intake photos, and filming a riding lesson. They’re on the Client page."},
+  {room:"class",when:"Mon Nov 2",time:"9:02 AM",by:"2E",body:"For the filming, do we reach Harley directly or through Braxton?"},
+  {room:"class",when:"Mon Nov 2",time:"9:06 AM",by:"3B",body:"Through Braxton or the class phone line. It’s on Contacts."},
+
+  {room:"t1",when:"Tue Oct 20",time:"7:15 PM",by:"1D",body:"Radio script is in, BRR-302. Four beats. The gate latch and the whinny come before the first line."},
+  {room:"t1",when:"Tue Oct 20",time:"7:22 PM",by:"1B",body:"Reading it tonight. Is the AI comparison on it? The course asks for one."},
+  {room:"t1",when:"Tue Oct 20",time:"7:24 PM",by:"1D",body:"Yes. The prompt, the answer and what I kept are all on the piece."},
+  {room:"t1",when:"Wed Oct 21",time:"1:05 PM",by:"1C",body:"Six print ads, BRR-303. “Rico’s Journey” is the strongest. Norman Transcript, plus flyers at feed stores and vet offices."},
+  {room:"t1",when:"Sat Oct 24",time:"11:20 AM",by:"1B",body:"Q1, photo releases: Braxton said film content is fine and Anna and Harley will help. Posting my answer now."},
+  {room:"t1",when:"Mon Nov 2",time:"8:30 AM",by:"1A",body:"I’m reviewing the radio script today. If the Rico before-and-after photo turns up, NS needs it for the ad."},
+
+  {room:"t2",when:"Wed Oct 21",time:"4:12 PM",by:"2C",body:"Post 3 is up, Reba on Facebook, BRR-313. It needs a teammate check before it goes to Braxton."},
+  {room:"t2",when:"Thu Oct 22",time:"9:40 PM",by:"2E",body:"Q4, account ownership: the ranch owns every login and we get editor access. Posting it tonight."},
+  {room:"t2",when:"Fri Oct 23",time:"3:15 PM",by:"2A",body:"Braxton approved a rebrand in general but hasn’t reacted to the concept yet. I’ll chase it on the next call."},
+  {room:"t2",when:"Mon Oct 26",time:"5:50 PM",by:"2D",body:"Q6, Google Business Profile: working on it, posting by Thursday."},
+  {room:"t2",when:"Mon Nov 2",time:"8:45 AM",by:"2B",body:"Q5, TikTok LIVE: it needs 1,000 followers before it unlocks, so it’s a spring thing. Posting the answer today."},
+
+  {room:"t3",when:"Wed Oct 21",time:"8:50 PM",by:"3B",body:"Drafted the email asking Braxton for a Rico intake photo for the storyboard. It’s waiting on Laura."},
+  {room:"t3",when:"Thu Oct 22",time:"4:15 PM",by:"3A",body:"Called Braxton about donation methods. She’d rather go through it Friday at the ranch, so Q9 waits till then. Logged on the class line."},
+  {room:"t3",when:"Fri Oct 23",time:"3:20 PM",by:"3C",body:"Q10, cost after December: no ad budget and no flexibility, she said. Everything we set up has to run free or she can’t keep it."},
+  {room:"t3",when:"Sat Oct 24",time:"2:05 PM",by:"3D",body:"Q8: donated services aren’t deductible for the donor, only out-of-pocket costs. Posting with the IRS page."},
+  {room:"t3",when:"Mon Nov 2",time:"8:20 AM",by:"3A",body:"Both of AE’s pieces are in: the press release, BRR-321, and the Rico storyboard, BRR-322. Account-lead check from me tonight."}
+];
+
 
 /* ---------- state ---------- */
 var S={role:"laura", me:"1B", scope:0, view:"dashboard", piece:null, student:null, filter:"all", gate:"teacher", ctab:"work",
-  grades:{}, comments:{}, peer:{}, peerDone:{}, peerEdits:{}, peerClosed:false, drafts:{}, canvas:null, sbOpen:null, adding:false, newSeq:340, bell:false, followups:[], rmAsk:null, copyText:null, searchOpen:false};
+  grades:{}, comments:{}, peer:{}, peerDone:{}, peerEdits:{}, peerClosed:false, drafts:{}, canvas:null, sbOpen:null, adding:false, newSeq:340, bell:false, followups:[], rmAsk:null, copyText:null, searchOpen:false, room:null, chatSeen:{}};
 var NOW_N=0;
 function nowStamp(){ NOW_N++; var t=21*60+12+NOW_N, h=Math.floor(t/60)%24, m=t%60, h12=h>12?h-12:h; return "Nov 2 "+h12+":"+(m<10?"0":"")+m+(h>=12?" PM":" AM"); }
 
@@ -677,6 +739,7 @@ function inScope(team){ return !S.scope || S.scope===team; }
 function scopeName(){ return S.scope?"Team "+S.scope+" · "+TEAMS[S.scope].short:"Whole class"; }
 var ICON={
   dashboard:'<rect x="2.5" y="2.5" width="4.6" height="4.6" rx="1"/><rect x="8.9" y="2.5" width="4.6" height="4.6" rx="1"/><rect x="2.5" y="8.9" width="4.6" height="4.6" rx="1"/><rect x="8.9" y="8.9" width="4.6" height="4.6" rx="1"/>',
+  chat:'<path d="M2.5 3.5h11v7.2H7.6L4.6 13v-2.3H2.5Z"/><path d="M5.2 6.3h5.6M5.2 8.4h3.6"/>',
   inbox:'<path d="M2.5 9.5 4.3 3.5h7.4l1.8 6"/><path d="M2.5 9.5v3h11v-3h-3.2l-.8 1.4H6.5l-.8-1.4Z"/>',
   contacts:'<circle cx="8" cy="5.6" r="2.4"/><path d="M3.4 13c.5-2.3 2.4-3.6 4.6-3.6s4.1 1.3 4.6 3.6"/>',
   work:'<rect x="2.5" y="4.5" width="11" height="8.5" rx="1.2"/><path d="M5.5 4.5V3h5v1.5"/><path d="M2.5 8.2h11"/>',
@@ -845,6 +908,8 @@ function viewDashboard(){
     '<div><span class="ic">'+ic("work")+'</span><div><b class="tab">'+builds.length+' pieces</b><span>'+done+' approved · '+withB+' with Braxton</span></div></div>'+
     (teacher?'<div><span class="ic">'+ic("grades")+'</span><div><b>Week 9 grades</b><span>evidence ready; you type each grade · <button class="link" data-go="grades">open</button></span></div></div>':'<div><span class="ic">'+ic("mail")+'</span><div><b>'+(S.peerDone[S.me]?"Teammate ratings sent":"Teammate ratings open")+'</b><span>Week 9 · closes Sunday</span></div></div>')+
   '</div></section>';
+  var ann=roomMsgs("ann"); if(ann.length){ var la=ann[ann.length-1];
+    h+='<section class="blk"><div class="panel"><div class="panel-h"><h2 class="h3">'+(teacher?"Your last announcement":"From Laura")+'</h2><span>'+esc(la.when)+' · '+esc(la.time)+'</span></div><div class="panel-b"><p style="margin:0;max-width:64ch">'+chatBody(la.body)+'</p><p class="small" style="margin:10px 0 0"><button class="link" data-go="chat" data-room="ann">'+(teacher?"All announcements, or post another":"All announcements")+'</button>'+(chatUnread()?' · <button class="link" data-go="chat">'+chatUnread()+' unread in chat</button>':'')+'</p></div></div></section>'; }
   if(!S.scope && teacher){
     h+='<section class="blk"><div class="panel"><div class="panel-h"><h2 class="h3">Teams</h2><span>made · fully approved · waiting for Braxton · students with work in</span></div><div class="scroll"><table class="tbl stack"><thead><tr><th>Team</th><th>State</th><th class="n">Made</th><th class="n">Fully approved</th><th class="n">With Braxton</th><th class="n">Visible</th></tr></thead><tbody>';
     [1,2,3].forEach(function(n){
@@ -1084,6 +1149,29 @@ function viewPeer(){
   return h;
 }
 
+/* ---------- Chat: announcements, the whole class, one room per team. Laura reads every room. ---------- */
+function myRooms(){ return ROOMS.filter(function(r){ return S.role==="laura" || !r.team || r.team===person(S.me).team; }); }
+function roomMsgs(id){ return CHAT.filter(function(m){ return m.room===id; }); }
+function unreadIn(id){ return S.chatSeen[id]?0:roomMsgs(id).filter(function(m){ return m.when===TODAY && m.by!==me(); }).length; }
+function chatUnread(){ if(S.role==="braxton") return 0; return myRooms().reduce(function(n,r){ return n+unreadIn(r.id); },0); }
+function curRoom(){ var rs=myRooms(); if(!rs.some(function(r){ return r.id===S.room; })) S.room=(S.role==="laura"&&S.scope?"t"+S.scope:rs[0].id); return S.room; }
+function chatBody(s){ return esc(s).replace(/BRR-\d{3}/g,function(id){ return docket(id)?'<button class="link" data-piece="'+id+'">'+id+'</button>':id; }); }
+function viewChat(){
+  var rs=myRooms(), cur=curRoom(), room=ROOMS.filter(function(r){ return r.id===cur; })[0], ms=roomMsgs(cur), teacher=S.role==="laura";
+  var h='<div class="kick">'+(teacher?"Whole class":"Team "+person(S.me).team+" · "+esc(TEAMS[person(S.me).team].short))+'</div><h1 tabindex="-1">Chat</h1><p class="lede">'+(teacher?"Announcements go to the whole class. You can read every room, so nothing about Braxton lives in a group text.":"Your team’s room, the whole class, and Laura’s announcements. Laura can read every room, so nothing about Braxton lives in a group text.")+'</p>';
+  h+='<div class="chat" style="margin-top:20px"><div class="panel rooms" role="tablist" aria-label="Rooms">'+rs.map(function(r){ var u=unreadIn(r.id); return '<button class="room" role="tab" data-room="'+r.id+'" aria-current="'+(r.id===cur)+'"><span class="lbl">'+esc(r.name)+'<small>'+esc(r.sub)+'</small></span>'+(u?'<span class="chip">'+u+'</span>':'')+'</button>'; }).join("")+'</div>';
+  h+='<div class="panel"><div class="panel-h"><h2 class="h3">'+esc(room.name)+'</h2><span>'+esc(room.sub)+'</span></div><div class="thread">';
+  var day=null; ms.forEach(function(m){ if(m.when!==day){ day=m.when; h+='<div class="daysep">'+esc(day)+'</div>'; }
+    h+='<div class="msg'+(m.room==="ann"?" ann":"")+(m.by===me()?" mine":"")+'">'+stamp(m.by,true)+'<div><div class="who"><b>'+esc(nameOf(m.by))+'</b><span>'+esc(m.time)+'</span></div><p>'+chatBody(m.body)+'</p></div></div>'; });
+  if(!ms.length) h+='<div class="empty" style="padding:20px"><b>Nothing here yet.</b>Say the first thing.</div>';
+  h+='</div>';
+  if(room.id==="ann" && !teacher) h+='<p class="note">Only Laura posts here. Everyone in the class sees it.</p>';
+  else h+='<form id="chatf" class="chatf"><textarea id="cm" rows="1" aria-label="Message to '+esc(room.name)+'" placeholder="'+(room.id==="ann"?"Announce something to the whole class":"Message "+esc(room.name))+'"></textarea><button class="btn act" type="submit">'+(room.id==="ann"?"Post":"Send")+'</button></form>';
+  h+='</div></div>';
+  h+='<p class="small faint" style="margin:14px 0 0">The threads in this demo are illustrations built from the class’s real posts, calls and calendar, not messages classmates wrote.</p>';
+  return h;
+}
+
 /* ---------- My week (students): grade so far, questions, team, contributions ---------- */
 function viewMyWeek(){
   var p=person(S.me), sg=suggest(S.me), work=madeBy(S.me), all=DOCKETS.filter(function(d){ return d.makers.indexOf(S.me)>=0; }), rev=reviewsBy(S.me);
@@ -1135,13 +1223,14 @@ function viewCourse(){
 
 /* ---------- shell ---------- */
 var NAV={
-  laura:[["dashboard","Dashboard","dashboard"],["inbox","Inbox","inbox"],["contacts","Contacts","contacts"],["work","Work","work"],["client","Client","client"],["grades","Grades","grades"],["students","Students","students"],["course","Course","course"]],
-  student:[["dashboard","Dashboard","dashboard"],["myweek","My week","grades"],["work","Work","work"],["inbox","Inbox","inbox"],["contacts","Contacts","contacts"],["client","Client","client"],["peer","Rate teammates","peer"]],
+  laura:[["dashboard","Dashboard","dashboard"],["inbox","Inbox","inbox"],["chat","Chat","chat"],["contacts","Contacts","contacts"],["work","Work","work"],["client","Client","client"],["grades","Grades","grades"],["students","Students","students"],["course","Course","course"]],
+  student:[["dashboard","Dashboard","dashboard"],["myweek","My week","grades"],["chat","Chat","chat"],["work","Work","work"],["inbox","Inbox","inbox"],["contacts","Contacts","contacts"],["client","Client","client"],["peer","Rate teammates","peer"]],
   braxton:[["mail","Your weekly email","mail"]]
 };
 function chipFor(k){
   if(k==="dashboard"){ var n=todos().length; return n?'<span class="chip">'+n+'</span>':''; }
   if(k==="inbox"){ var h=heldForMe().length; return h?'<span class="chip">'+h+'</span>':''; }
+  if(k==="chat"){ var u=chatUnread(); return u?'<span class="chip">'+u+'</span>':''; }
   if(k==="work"){ var w=mine().length; return w?'<span class="chip">'+w+'</span>':''; }
   if(k==="myweek"){ var q=QUESTIONS.filter(function(x){ return x.owners.indexOf(S.me)>=0 && x.posted.indexOf(S.me)<0; }).length; return q?'<span class="chip">'+q+'</span>':''; }
   if(k==="students" && S.role==="laura"){ var v=ROSTER.filter(function(p){ return inScope(p.team) && !visible(p.id); }).length; return v?'<span class="chip red" title="Nothing in Docket yet">'+v+'</span>':''; }
@@ -1176,8 +1265,8 @@ function render(){
   var v=S.view, html;
   if(v==="dashboard") html=viewDashboard(); else if(v==="inbox") html=viewInbox(); else if(v==="contacts") html=viewContacts(); else if(v==="work") html=viewWork();
   else if(v==="piece") html=viewPiece(S.piece); else if(v==="client") html=viewClient(); else if(v==="grades") html=viewGrades(); else if(v==="students") html=viewStudents();
-  else if(v==="student") html=viewStudent(S.student); else if(v==="peer") html=viewPeer(); else if(v==="myweek") html=viewMyWeek(); else if(v==="answer") html=viewAnswer(); else if(v==="course") html=viewCourse(); else if(v==="mail") html=viewMail();
-  $("#main").innerHTML=html+'<p class="demo">Demo built from MKT 4970’s own Week 9 check-in, creative brief and stakeholder interviews. The posts and quoted text are the class’s real work. Students appear as seats (1A to 3E), never by name. Approval times and anything marked sample are illustrations; files you add and changes you make reset on reload. Docket is made by Station, which a student in this class runs; <button class="link small" data-answer-open="2">read that student’s disclosure (research question 2)</button>. Content synced from the class Google Drive on Nov 2.</p>';
+  else if(v==="student") html=viewStudent(S.student); else if(v==="peer") html=viewPeer(); else if(v==="myweek") html=viewMyWeek(); else if(v==="answer") html=viewAnswer(); else if(v==="course") html=viewCourse(); else if(v==="mail") html=viewMail(); else if(v==="chat") html=viewChat();
+  $("#main").innerHTML=html+'<p class="demo">Demo built from MKT 4970’s own Week 9 check-in, creative brief and stakeholder interviews. The posts and quoted text are the class’s real work. Students appear by seat and first name; surnames never. Approval times, the chat threads and anything marked sample are illustrations; files you add and changes you make reset on reload. Docket is made by Station, which a student in this class runs; <button class="link small" data-answer-open="2">read that student’s disclosure (research question 2)</button>. Content synced from the class Google Drive on Nov 2.</p>';
   if(S.bell) renderBell();
   var target=null; if(lastView===S.view+"|"+S.piece+"|"+S.student && fk){ try{ target=document.querySelector(fk); }catch(e){} }
   if(!target && lastView && lastView!==S.view+"|"+S.piece+"|"+S.student) target=$("main h1");
@@ -1233,13 +1322,14 @@ function search(q){
 document.addEventListener("click",function(e){
   if(!e.target.closest(".searchwrap")) $("#results").hidden=true;
   if(S.bell && !e.target.closest("#bellpanel") && !e.target.closest("#bell")) closeBell();
-  var t=e.target.closest("[data-go],[data-piece],[data-student],[data-sign],[data-sbopen],[data-sbcancel],[data-sendback],[data-resubmit],[data-claim],[data-approve],[data-reject],[data-rejectgo],[data-rejcancel],[data-send],[data-filter],[data-jump],[data-gate],[data-pick],[data-ctab],[data-adding],[data-gdoc],[data-rmfile],[data-canvas],[data-rate],[data-peersubmit],[data-lead],[data-scopeto],[data-bell],[data-skip],[data-rmgo],[data-rmkeep],[data-resend],[data-editheld],[data-ehsave],[data-ehcancel],[data-withdraw],[data-fudone],[data-answer],[data-weight],[data-peerclose],[data-copylink],[data-copysummary],[data-answer-open],#bell,#srchbtn");
+  var t=e.target.closest("[data-room],[data-go],[data-piece],[data-student],[data-sign],[data-sbopen],[data-sbcancel],[data-sendback],[data-resubmit],[data-claim],[data-approve],[data-reject],[data-rejectgo],[data-rejcancel],[data-send],[data-filter],[data-jump],[data-gate],[data-pick],[data-ctab],[data-adding],[data-gdoc],[data-rmfile],[data-canvas],[data-rate],[data-peersubmit],[data-lead],[data-scopeto],[data-bell],[data-skip],[data-rmgo],[data-rmkeep],[data-resend],[data-editheld],[data-ehsave],[data-ehcancel],[data-withdraw],[data-fudone],[data-answer],[data-weight],[data-peerclose],[data-copylink],[data-copysummary],[data-answer-open],#bell,#srchbtn");
   if(!t) return; var a=t.dataset;
   if(t.id==="srchbtn"){ S.searchOpen=!S.searchOpen; $(".searchwrap").classList.toggle("open",S.searchOpen); t.setAttribute("aria-expanded",String(S.searchOpen)); if(S.searchOpen) $("#q").focus(); return; }
   if(a.answerOpen){ S.qOpen=+a.answerOpen; S.view="answer"; closeBell(); render(); window.scrollTo(0,0); return; }
   if(a.skip){ var h1=$("main h1"); if(h1) h1.focus(); return; }
   if(t.id==="bell"||a.bell){ if(S.bell) closeBell(); else { S.bell=true; renderBell(); } return; }
   if(t.closest("#results")){ $("#results").hidden=true; $("#q").value=""; }
+  if(a.room){ S.room=a.room; S.chatSeen[a.room]=true; if(!a.go){ render(); return; } }
   if(a.go){ e.preventDefault(); if(a.ctab) S.ctab=a.ctab; if(a.adding) S.adding=a.adding==="1"; go(a.go); if(S.adding){ var nt=$("#nt"); if(nt) nt.focus(); } return; }
   if(a.ctab){ S.ctab=a.ctab; render(); return; }
   if(a.scopeto){ S.scope=+a.scopeto; S.filter="all"; render(); toast("Showing "+scopeName()); return; }
@@ -1325,11 +1415,11 @@ document.addEventListener("input",function(e){
   if(t.dataset && t.dataset.comment) S.comments[t.dataset.comment]=t.value;
   if(t.dataset && t.dataset.grade && S.role==="laura"){ var gv=t.value===""?null:Math.max(0,Math.min(50,Math.round(+t.value))); S.grades[t.dataset.grade]=isNaN(gv)?null:gv; var gc=$("#gcount"), gr=ROSTER.filter(function(r){ return inScope(r.team); }); if(gc) gc.textContent=gr.filter(function(r){ return S.grades[r.id]!=null; }).length+" of "+gr.length+" graded"; }
 });
-document.addEventListener("keydown",function(e){ if(e.key==="Escape"){ closeBell(); $("#results").hidden=true; } if(e.key==="/" && !/input|textarea|select/i.test(document.activeElement.tagName)){ e.preventDefault(); $("#q").focus(); } });
+document.addEventListener("keydown",function(e){ if(e.key==="Enter" && !e.shiftKey && e.target.id==="cm"){ e.preventDefault(); var cf=$("#chatf"); if(cf) cf.requestSubmit(); return; } if(e.key==="Escape"){ closeBell(); $("#results").hidden=true; } if(e.key==="/" && !/input|textarea|select/i.test(document.activeElement.tagName)){ e.preventDefault(); $("#q").focus(); } });
 document.addEventListener("change",function(e){
   var t=e.target;
-  if(t.id==="as"){ S.role=t.value; $("#me").hidden=S.role!=="student"; S.sbOpen=null; S.adding=false; S.scope=S.role==="student"?person(S.me).team:0; S.view=NAV[S.role][0][0]; closeBell(); setHash(S.view); render(); return; }
-  if(t.id==="me"){ S.me=t.value; S.sbOpen=null; S.adding=false; S.scope=person(S.me).team; render(); return; }
+  if(t.id==="as"){ S.role=t.value; $("#me").hidden=S.role!=="student"; S.sbOpen=null; S.room=null; S.adding=false; S.scope=S.role==="student"?person(S.me).team:0; S.view=NAV[S.role][0][0]; closeBell(); setHash(S.view); render(); return; }
+  if(t.id==="me"){ S.me=t.value; S.sbOpen=null; S.room=null; S.adding=false; S.scope=person(S.me).team; render(); return; }
   if(t.id==="scope"){ S.scope=+t.value; S.filter="all"; if(S.view==="piece"||S.view==="student") S.view="dashboard"; render(); return; }
   if(t.id==="startpt"){ if(S.role!=="laura") return; S.showStart=t.checked; render(); return; }
   if(t.dataset.grade){ if(S.role!=="laura") return; var v=t.value===""?null:Math.max(0,Math.min(50,Math.round(+t.value))); S.grades[t.dataset.grade]=v; if(v!=null) t.value=v; return; }
@@ -1365,6 +1455,9 @@ document.addEventListener("submit",function(e){
     insertPast({id:"C"+NOW_N+Date.now(),when:TODAY,time:stampNow.slice(7),kind:$("#lk").value,by:by,body:tx,mins:mins>0?Math.round(mins):null,follow:fol||null,src:"Logged by "+(by==="Class"?"Laura":by)});
     if(fol) S.followups.push({id:"F"+NOW_N+Date.now(),by:me(),text:fol,kind:$("#lk").value,when:stampNow,done:false});
     toast($("#lk").value+" logged"); render(); return; }
+  if(e.target.id==="chatf"){ var cr=curRoom(), box=$("#cm"), tx=(box.value||"").trim(); if(!tx){ box.focus(); toast("Write the message first"); return; }
+    if(cr==="ann" && S.role!=="laura") return; var ts=nowStamp();
+    CHAT.push({room:cr,when:TODAY,time:ts.slice(ts.indexOf(" ",4)+1),by:me(),body:tx}); S.chatSeen[cr]=true; toast(cr==="ann"?"Posted to the whole class":"Sent"); render(); var cm=$("#cm"); if(cm) cm.focus(); return; }
   if(e.target.id==="addf"){ if(S.role!=="student") return; var title=($("#nt").value||"").trim(); if(!title){ $("#nt").focus(); toast("Give the piece a name first"); return; }
     var p=person(S.me), pub=$("#nc").checked, id="BRR-"+(++S.newSeq), w=nowStamp();
     DOCKETS.push({id:id,part:"build",team:p.team,title:title,sub:$("#nk").value+(pub?" · goes public":" · stays in class"),makers:[S.me],cross:(pub&&p.team!==1)?1:null,client:pub,back:null,due:"Sun Oct 25",medium:$("#nk").value,work:{kind:"new"},isNew:true,weight:1,files:[],signed:{},hist:[[w,S.me,"Started this piece"]]});
