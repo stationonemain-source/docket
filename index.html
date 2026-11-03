@@ -267,6 +267,11 @@ button.stamp:hover{background:var(--ink);color:var(--paper)}
 .gtbl .workthumbs .thumb{width:32px;height:32px;cursor:pointer;padding:0}
 .gtbl tr.flag td{background:var(--red-t)}
 .gtbl .c-stu{width:180px}.gtbl .c-work{min-width:184px}.gtbl td[data-l="Their work"] .ev,.gtbl td[data-l="Teammate ratings"] span{white-space:nowrap}.gtbl .c-res{min-width:120px}.gtbl .c-peer{min-width:140px}
+.gscroll .gtbl thead th{position:sticky;top:0;z-index:3;background:var(--panel);box-shadow:inset 0 -1px 0 var(--line);border-bottom:0}
+.gscroll.fits{overflow:visible}
+.gscroll.fits .gtbl thead th{top:var(--tbh,59px)}
+.gscroll:not(.fits) .gtbl thead{position:relative;z-index:3}
+.gscroll:not(.fits) .gtbl thead th{position:relative}
 .gtbl td.stu .flagline{max-width:220px;line-height:1.35}.gtbl .note2d{display:block;margin-top:6px;max-width:220px;font-size:var(--s11);line-height:1.35;color:var(--ink2)}
 .gtbl{min-width:980px}
 .gtbl td,.gtbl th{padding-left:14px;padding-right:12px}.gtbl td:first-child,.gtbl th:first-child{padding-left:20px}
@@ -1019,7 +1024,7 @@ function viewMail(){ return '<div class="kick">Butterfly Rescue Ranch</div><h1>T
 function viewGrades(){
   var roster=ROSTER.filter(function(p){ return inScope(p.team); });
   var h='<div class="kick">'+esc(scopeName())+'</div><h1 tabindex="-1">Grades, Week 9</h1><p class="lede">What each student did, as evidence. You type the grade. Nothing is filled in for you'+(S.showStart?'; the starting points shown are a starting point, not a grade':'')+'.</p>';
-  h+='<section class="blk"><div class="panel"><div class="panel-h"><h2 class="h3">Evidence by student</h2><span style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><label class="check small"><input type="checkbox" id="startpt" '+(S.showStart?'checked':'')+'> Show a starting point</label></span></div><div class="scroll"><table class="tbl gtbl stack"><thead><tr><th class="c-stu">Student</th><th class="c-work">Their work</th><th class="n">Reviewed others</th><th class="c-res">Research</th><th class="c-peer">Teammate ratings</th><th class="n">Client contact</th>'+(S.showStart?'<th>Starting point</th>':'')+'<th>Grade</th><th>Comment</th></tr></thead><tbody>';
+  h+='<section class="blk"><div class="panel"><div class="panel-h"><h2 class="h3">Evidence by student</h2><span style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><label class="check small"><input type="checkbox" id="startpt" '+(S.showStart?'checked':'')+'> Show a starting point</label></span></div><div class="scroll gscroll"><table class="tbl gtbl stack"><thead><tr><th class="c-stu">Student</th><th class="c-work">Their work</th><th class="n">Reviewed others</th><th class="c-res">Research</th><th class="c-peer">Teammate ratings</th><th class="n">Client contact</th>'+(S.showStart?'<th>Starting point</th>':'')+'<th>Grade</th><th>Comment</th></tr></thead><tbody>';
   roster.forEach(function(p){
     var counted=madeBy(p.id), mine=DOCKETS.filter(function(d){ return d.makers.indexOf(p.id)>=0 && !d.answerQ; }), waiting=mine.filter(function(d){ return counted.indexOf(d)<0; });
     var rn=reviewNotes(p.id), rv=reviewsBy(p.id), qs=QUESTIONS.filter(function(q){ return q.owners.indexOf(p.id)>=0; }), con=LINE.filter(function(l){ return l.by===p.id && !l.held && !l.returned; }).length, pa=peerAvg(p.id), fl=flagsFor(p.id);
@@ -1176,7 +1181,25 @@ function render(){
   if(!target && lastView && lastView!==S.view+"|"+S.piece+"|"+S.student) target=$("main h1");
   if(target && target.focus) target.focus({preventScroll:true});
   render._v=S.view+"|"+S.piece+"|"+S.student;
+  gridFit();
 }
+/* Grades header stays pinned under the top bar: CSS sticky when the table fits the page; when it has to scroll sideways
+   (which defeats sticky), headPin slides the header down as the page scrolls */
+function gridFit(){
+  var g=$(".gscroll"); if(!g) return;
+  var tb=$(".topbar"); document.documentElement.style.setProperty("--tbh",(tb && getComputedStyle(tb).position==="sticky"?tb.offsetHeight:0)+"px");
+  g.classList.add("fits"); var t=g.querySelector("table"); if(t.offsetWidth>g.clientWidth+1) g.classList.remove("fits");
+  headPin();
+}
+function headPin(){
+  var g=$(".gscroll"); if(!g) return; var t=g.querySelector("table"), hd=t.tHead;
+  if(g.classList.contains("fits") || !hd.offsetHeight){ hd.style.transform=""; return; }
+  var tbh=parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--tbh"))||0, r=t.getBoundingClientRect();
+  var off=Math.max(0,Math.min(tbh-r.top, r.height-hd.offsetHeight*2));
+  hd.style.transform=off?"translateY("+Math.round(off)+"px)":"";
+}
+window.addEventListener("resize",gridFit);
+window.addEventListener("scroll",headPin,{passive:true});
 function renderBell(){
   var t=todos(), p=$("#bellpanel");
   p.innerHTML='<div class="bh"><b>'+(t.length?(t.length===1?"1 thing needs you":t.length+" things need you"):"Nothing needs you")+'</b><span class="small faint">'+esc(scopeName())+'</span></div><div class="bl">'+(t.length?t.map(function(x){ return '<button class="bi" '+x.data+'><span class="pill '+(x.kind==="bad"?"bad":"todo")+'">'+(x.kind==="bad"?"Problem":"To do")+'</span><span><b>'+esc(x.title)+'</b><small>'+esc(x.sub)+'</small></span></button>'; }).join(""):'<div class="empty">You’re caught up.</div>')+'</div>';
