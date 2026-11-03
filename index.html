@@ -1041,7 +1041,7 @@ function viewGrades(){
   var graded=roster.filter(function(p){ return S.grades[p.id]!=null; }).length;
   h+='</tbody></table></div><div class="sendbar"><span class="muted"><span id="gcount">'+graded+' of '+roster.length+' graded</span> · Canvas column: <b>Week 9 Check-In, 50 points</b></span><span style="display:flex;gap:10px;flex-wrap:wrap">'+(S.peerClosed?'':'<button class="btn" data-peerclose="1">Close teammate ratings</button>')+'<button class="btn act" data-canvas="review">Send to Canvas</button></span></div></div>';
   if(S.canvas==="review") h+='<div class="panel confirm"><h2 class="h3">Send '+graded+' grade'+(graded===1?'':'s')+' to Canvas?</h2><ul><li>Course: MKT 4970, Integrated Marketing Communications</li><li>Assignment: Week 9 Check-In, out of 50</li><li>'+(roster.length-graded)+' student'+(roster.length-graded===1?'':'s')+' left blank, not sent</li><li>'+roster.filter(function(p){ return S.comments[p.id]; }).length+' comment'+(roster.filter(function(p){ return S.comments[p.id]; }).length===1?'':'s')+' go with them</li></ul><div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn act" data-canvas="send"'+(graded?'':' disabled')+'>Send</button><button class="btn" data-canvas="cancel">Cancel</button></div></div>';
-  if(S.canvas==="sent") h+='<div class="panel confirm"><h2 class="h3">Canvas isn’t connected in this demo</h2><p class="muted" style="margin:6px 0 0">Nothing was sent. In the real product these grades post to the Canvas gradebook, and each student sees their score and comment there.</p></div>';
+  if(S.canvas==="sent") h+='<div class="panel confirm"><h2 class="h3">Canvas isn’t connected in this demo</h2><p class="muted" style="margin:6px 0 0">Nothing was sent. A connected version would post these grades to the Canvas gradebook, where each student would see their score and comment.</p></div>';
   return h+'</section>';
 }
 /* ---------- Students ---------- */
@@ -1051,7 +1051,7 @@ function viewStudents(){
   h+='<section class="blk"><div class="panel"><div class="scroll"><table class="tbl"><thead><tr><th>Student</th><th>Team</th><th>Account lead</th><th class="n">Made</th><th class="n">Reviewed</th><th>This week</th></tr></thead><tbody>'+roster.map(function(p){
     var v=visible(p.id);
     return '<tr><td>'+stamp(p.id,true)+'</td><td><select data-move="'+p.id+'" aria-label="Team for '+esc(nameOf(p.id))+'">'+[1,2,3].map(function(t){ return '<option value="'+t+'"'+(p.team===t?" selected":"")+'>Team '+t+', '+TEAMS[t].short+'</option>'; }).join("")+'</select></td><td>'+(TEAMS[p.team].lead===p.id?'<span class="pill ok">Lead</span>':'<button class="quiet" data-lead="'+p.id+'">Make lead</button>')+'</td><td class="n">'+(madeBy(p.id).length+answered(p.id).length)+'</td><td class="n">'+reviewsBy(p.id).length+'</td><td>'+(v?'<span class="pill ok">In Docket</span>':'<span class="pill bad">Nothing yet</span>')+'</td></tr>';
-  }).join("")+'</tbody></table></div></div><p class="small faint">Students appear as seats in this demo. A real class shows names.</p></section>';
+  }).join("")+'</tbody></table></div></div><p class="small faint">Students appear as seats in this demo. A connected version would show names.</p></section>';
   return h;
 }
 function viewStudent(id){
@@ -1175,7 +1175,7 @@ function render(){
   if(v==="dashboard") html=viewDashboard(); else if(v==="inbox") html=viewInbox(); else if(v==="contacts") html=viewContacts(); else if(v==="work") html=viewWork();
   else if(v==="piece") html=viewPiece(S.piece); else if(v==="client") html=viewClient(); else if(v==="grades") html=viewGrades(); else if(v==="students") html=viewStudents();
   else if(v==="student") html=viewStudent(S.student); else if(v==="peer") html=viewPeer(); else if(v==="myweek") html=viewMyWeek(); else if(v==="answer") html=viewAnswer(); else if(v==="course") html=viewCourse(); else if(v==="mail") html=viewMail();
-  $("#main").innerHTML=html+'<p class="demo">Demo built from MKT 4970’s own Week 9 check-in, creative brief and stakeholder interviews. The posts and quoted text are the class’s real work. Students appear as seats (1A to 3D), never by name. Approval times and anything marked sample are illustrations; files you add and changes you make reset on reload. Docket is made by Station, which a student in this class runs; <button class="link small" data-answer-open="2">read that student’s disclosure (research question 2)</button>. Content synced from the class Google Drive on Nov 2.</p>';
+  $("#main").innerHTML=html+'<p class="demo">Demo built from MKT 4970’s own Week 9 check-in, creative brief and stakeholder interviews. The posts and quoted text are the class’s real work. Students appear as seats (1A to 3E), never by name. Approval times and anything marked sample are illustrations; files you add and changes you make reset on reload. Docket is made by Station, which a student in this class runs; <button class="link small" data-answer-open="2">read that student’s disclosure (research question 2)</button>. Content synced from the class Google Drive on Nov 2.</p>';
   if(S.bell) renderBell();
   var target=null; if(lastView===S.view+"|"+S.piece+"|"+S.student && fk){ try{ target=document.querySelector(fk); }catch(e){} }
   if(!target && lastView && lastView!==S.view+"|"+S.piece+"|"+S.student) target=$("main h1");
